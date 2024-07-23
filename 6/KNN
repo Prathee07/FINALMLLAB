@@ -1,0 +1,65 @@
+import numpy as np
+import pandas as pd
+from collections import Counter
+from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+
+def euclidean_distance(x1, x2):
+    distance = np.sqrt(np.sum((x1 - x2) ** 2))
+    return distance
+
+def manhattan_distance(x1, x2):
+    distance = np.sum(np.abs(x1 - x2))
+    return distance
+
+class KNN:
+    def __init__(self, k, distance_metric='euclidean'):
+        self.k = k
+        self.distance_metric = distance_metric
+
+    def fit(self, X, y):
+        self.X_train = X
+        self.y_train = y
+
+    def predict(self, X):
+        predictions = [self._predict(x) for x in X]
+        return predictions
+
+    def _predict(self, x):
+        if self.distance_metric == 'euclidean':
+            distances = [euclidean_distance(x, x_train) for x_train in self.X_train]
+        elif self.distance_metric == 'manhattan':
+            distances = [manhattan_distance(x, x_train) for x_train in self.X_train]
+        else:
+            raise ValueError("Invalid distance metric. Choose 'euclidean' or 'manhattan'.")
+
+        k_indices = np.argsort(distances)[:self.k]
+        k_nearest_labels = [self.y_train[i] for i in k_indices]
+        most_common = Counter(k_nearest_labels).most_common()
+        return most_common[0][0]
+
+# Load the glass dataset
+glass_df = pd.read_csv("glass.csv")
+glass_y = glass_df['Type'].values
+glass_X = glass_df.drop('Type', axis=1).values
+
+# Split the datasets into training and testing sets
+glass_X_train, glass_X_test, glass_y_train, glass_y_test = train_test_split(glass_X, glass_y, test_size=0.3)
+
+
+# Train and test KNN classifier for glass dataset with Euclidean distance
+glass_clf_euclidean = KNN(k=5, distance_metric='euclidean')
+glass_clf_euclidean.fit(glass_X_train, glass_y_train)
+glass_predictions_euclidean = glass_clf_euclidean.predict(glass_X_test)
+glass_accuracy_euclidean = np.sum(glass_predictions_euclidean == glass_y_test) / len(glass_y_test)
+print("Accuracy with Euclidean distance for glass dataset:", glass_accuracy_euclidean)
+print(glass_predictions_euclidean)
+
+
+# Train and test KNN classifier for glass dataset with Manhattan distance
+glass_clf_manhattan = KNN(k=5, distance_metric='manhattan')
+glass_clf_manhattan.fit(glass_X_train, glass_y_train)
+glass_predictions_manhattan = glass_clf_manhattan.predict(glass_X_test)
+glass_accuracy_manhattan = np.sum(glass_predictions_manhattan == glass_y_test) / len(glass_y_test)
+print("Accuracy with Manhattan distance for glass dataset:", glass_accuracy_manhattan)
+print(glass_predictions_manhattan)
